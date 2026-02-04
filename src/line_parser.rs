@@ -162,6 +162,9 @@ pub fn parse_line(line: &str) -> Result<Line> {
                             sqlparser::ast::DataType::Text => ColumnType::String,
                             sqlparser::ast::DataType::String(_) => ColumnType::String,
                             sqlparser::ast::DataType::Enum(_) => ColumnType::String,
+                            sqlparser::ast::DataType::Varbinary(_) => ColumnType::String,
+                            sqlparser::ast::DataType::Binary(_) => ColumnType::String,
+                            sqlparser::ast::DataType::Blob(_) => ColumnType::String,
                             sqlparser::ast::DataType::Custom(name, _) => {
                                 let type_name = name.0[0].value.as_str();
                                 match type_name {
