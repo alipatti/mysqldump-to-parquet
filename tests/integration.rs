@@ -48,41 +48,25 @@ fn test_wikipedia_redirect_dump() {
     let output_path = Path::new(output_dir);
     assert!(output_path.exists(), "Output directory not created");
 
-    // Find table directories
-    let entries: Vec<_> = fs::read_dir(output_path)
+    // Find parquet files
+    let parquet_files: Vec<_> = fs::read_dir(output_path)
         .unwrap()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().is_dir())
+        .filter(|e| e.path().extension().map(|ext| ext == "parquet").unwrap_or(false))
         .collect();
 
-    assert!(!entries.is_empty(), "No table directories created");
+    assert!(!parquet_files.is_empty(), "No parquet files created");
 
-    for entry in &entries {
-        let table_dir = entry.path();
-        let table_name = table_dir.file_name().unwrap().to_str().unwrap();
-
-        // Count parquet files
-        let parquet_files: Vec<_> = fs::read_dir(&table_dir)
-            .unwrap()
-            .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().map(|ext| ext == "parquet").unwrap_or(false))
-            .collect();
+    for entry in &parquet_files {
+        let file_path = entry.path();
+        let file_name = file_path.file_name().unwrap().to_str().unwrap();
+        let file_size = entry.metadata().unwrap().len();
 
         eprintln!(
-            "Table '{}': {} parquet files",
-            table_name,
-            parquet_files.len()
+            "Table '{}': {} MB",
+            file_name,
+            file_size / 1024 / 1024
         );
-
-        assert!(!parquet_files.is_empty(), "No parquet files for table {}", table_name);
-
-        // Check file sizes
-        let total_size: u64 = parquet_files
-            .iter()
-            .map(|f| f.metadata().unwrap().len())
-            .sum();
-
-        eprintln!("  Total size: {} MB", total_size / 1024 / 1024);
     }
 
     eprintln!("Test passed!");
@@ -134,20 +118,10 @@ INSERT INTO `posts` VALUES (1,1,'Hello World'),(2,1,'Second Post'),(3,2,'Bobs Po
     assert!(status.success(), "Conversion failed");
 
     // Check users table
-    let users_dir = output_dir.join("users");
-    assert!(users_dir.exists(), "users directory not created");
-    let user_files: Vec<_> = fs::read_dir(&users_dir)
-        .unwrap()
-        .filter_map(|e| e.ok())
-        .collect();
-    assert!(!user_files.is_empty(), "No parquet files for users table");
+    let users_file = output_dir.join("users.parquet");
+    assert!(users_file.exists(), "users.parquet not created");
 
     // Check posts table
-    let posts_dir = output_dir.join("posts");
-    assert!(posts_dir.exists(), "posts directory not created");
-    let post_files: Vec<_> = fs::read_dir(&posts_dir)
-        .unwrap()
-        .filter_map(|e| e.ok())
-        .collect();
-    assert!(!post_files.is_empty(), "No parquet files for posts table");
+    let posts_file = output_dir.join("posts.parquet");
+    assert!(posts_file.exists(), "posts.parquet not created");
 }
