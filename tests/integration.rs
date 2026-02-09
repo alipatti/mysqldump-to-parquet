@@ -27,16 +27,16 @@ fn test_wikipedia_redirect_dump() {
 
     // Build the binary
     let status = Command::new("cargo")
-        .args(["build", "--release"])
+        .args(["build"])
         .status()
         .expect("Failed to build");
-    assert!(status.success(), "Failed to build release binary");
+    assert!(status.success(), "Failed to build binary");
 
     // Run the conversion
     eprintln!("Converting {} to parquet...", dump_path);
     let start = std::time::Instant::now();
     let status = Command::new("cargo")
-        .args(["run", "--release", "--", "-o", output_dir, dump_path])
+        .args(["run", "--", "-o", output_dir, dump_path])
         .status()
         .expect("Failed to run conversion");
     let elapsed = start.elapsed();
