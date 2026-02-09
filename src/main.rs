@@ -133,9 +133,11 @@ fn main() -> Result<()> {
         }
 
         if current_statement.ends_with(';') {
-            if current_statement.starts_with("CREATE TABLE")
-                || current_statement.starts_with("INSERT INTO")
-            {
+            if current_statement.starts_with("CREATE TABLE") {
+                line_parser_sender
+                    .send(cleanup_create_table(current_statement.trim()))
+                    .context("Cannot send SQL statement to parser!")?;
+            } else if current_statement.starts_with("INSERT INTO") {
                 line_parser_sender
                     .send(current_statement.trim().to_string())
                     .context("Cannot send SQL statement to parser!")?;
@@ -155,7 +157,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn cleanup_key(line: &str) -> Cow<str> {
+fn cleanup_key(line: &str) -> Cow<'_, str> {
     if line.contains("KEY ") {
         let mut ret = String::new();
         let mut depth = 0;
@@ -178,6 +180,22 @@ fn cleanup_key(line: &str) -> Cow<str> {
     } else {
         line.into()
     }
+}
+
+/// Remove MySQL-specific syntax that sqlparser doesn't support
+fn cleanup_create_table(stmt: &str) -> String {
+    let mut result = stmt.to_string();
+    // Remove ROW_FORMAT=...
+    if let Some(idx) = result.find(" ROW_FORMAT=") {
+        // Find end of ROW_FORMAT value (space or semicolon), starting after "ROW_FORMAT="
+        let value_start = idx + " ROW_FORMAT=".len();
+        let end = result[value_start..]
+            .find([' ', ';'])
+            .map(|i| value_start + i)
+            .unwrap_or(result.len());
+        result.replace_range(idx..end, "");
+    }
+    result
 }
 
 #[cfg(test)]
