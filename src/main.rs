@@ -157,7 +157,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn cleanup_key(line: &str) -> Cow<str> {
+fn cleanup_key(line: &str) -> Cow<'_, str> {
     if line.contains("KEY ") {
         let mut ret = String::new();
         let mut depth = 0;
@@ -190,7 +190,7 @@ fn cleanup_create_table(stmt: &str) -> String {
         // Find end of ROW_FORMAT value (space or semicolon), starting after "ROW_FORMAT="
         let value_start = idx + " ROW_FORMAT=".len();
         let end = result[value_start..]
-            .find(|c: char| c == ' ' || c == ';')
+            .find([' ', ';'])
             .map(|i| value_start + i)
             .unwrap_or(result.len());
         result.replace_range(idx..end, "");

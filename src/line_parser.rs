@@ -181,14 +181,12 @@ pub fn parse_line(line: &str) -> Result<Line> {
                                     sqlparser::ast::ColumnOption::Null => Some(true),
                                     sqlparser::ast::ColumnOption::NotNull => Some(false),
                                     sqlparser::ast::ColumnOption::Unique { is_primary }
-                                        if is_primary == true =>
+                                        if is_primary =>
                                     {
                                         Some(false)
                                     }
                                     _ => None,
-                                })
-                                .filter(Option::is_some)
-                                .next()
+                                }).find(Option::is_some)
                                 .flatten()
                                 .unwrap_or(true),
                             column_type,
