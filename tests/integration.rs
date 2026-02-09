@@ -52,7 +52,12 @@ fn test_wikipedia_redirect_dump() {
     let parquet_files: Vec<_> = fs::read_dir(output_path)
         .unwrap()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().map(|ext| ext == "parquet").unwrap_or(false))
+        .filter(|e| {
+            e.path()
+                .extension()
+                .map(|ext| ext == "parquet")
+                .unwrap_or(false)
+        })
         .collect();
 
     assert!(!parquet_files.is_empty(), "No parquet files created");
@@ -62,11 +67,7 @@ fn test_wikipedia_redirect_dump() {
         let file_name = file_path.file_name().unwrap().to_str().unwrap();
         let file_size = entry.metadata().unwrap().len();
 
-        eprintln!(
-            "Table '{}': {} MB",
-            file_name,
-            file_size / 1024 / 1024
-        );
+        eprintln!("Table '{}': {} MB", file_name, file_size / 1024 / 1024);
     }
 
     eprintln!("Test passed!");
